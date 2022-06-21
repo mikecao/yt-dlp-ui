@@ -1,0 +1,15 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.header {
+  display: flex;
+  gap: 10px;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+}
