@@ -1,24 +1,30 @@
 import { useState } from 'react';
-import Button from "./components/Button";
+import md5 from 'md5';
 import Search from './components/Search';
+import Downloads from './components/Downloads';
 import styles from './App.module.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/600.css';
 
 function App() {
-  const [search, setSearch] = useState('');
   const [downloads, setDownloads] = useState([]);
 
-  const handleStart = () => {
-
-  }
+  const handleSubmit = value => {
+    setDownloads(state =>
+      state.concat({
+        id: md5(Date.now()),
+        url: value,
+      }),
+    );
+  };
 
   return (
     <div className={styles.app}>
       <div className={styles.header}>
-        <Search value={search} onChange={setSearch} /><Button text="Start" onClick={handleStart} />
+        <Search onSubmit={handleSubmit} />
       </div>
       <div className={styles.view}>
-        <h3>Downloads</h3>
-        {downloads.map(() => <div>download</div>)}
+        <Downloads downloads={downloads} />
       </div>
     </div>
   );

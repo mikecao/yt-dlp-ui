@@ -1,9 +1,9 @@
 {
-  "$schema": "..\\node_modules/@tauri-apps/cli\\schema.json",
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
-    "beforeBuildCommand": "yarn build",
-    "beforeDevCommand": "yarn start",
-    "devPath": "http://localhost:3000",
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:7000",
     "distDir": "../build"
   },
   "package": {
@@ -12,7 +12,27 @@
   },
   "tauri": {
     "allowlist": {
-      "all": true
+      "all": false,
+      "shell": {
+        "all": true,
+        "sidecar": true,
+        "open": true,
+        "scope": [
+          {
+            "name": "binaries/yt-dlp",
+            "sidecar": true,
+            "args": [
+              {
+                "validator": "\\S+"
+              },
+              "-o",
+              {
+                "validator": "\\S+"
+              }
+            ]
+          }
+        ]
+      }
     },
     "bundle": {
       "active": true,
@@ -21,7 +41,7 @@
       "deb": {
         "depends": []
       },
-      "externalBin": [],
+      "externalBin": ["binaries/yt-dlp"],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -29,7 +49,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.mikecao.dev",
+      "identifier": "com.tauri.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -58,7 +78,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "Youtube-dl",
+        "title": "youtube-dl-client",
         "width": 800
       }
     ]

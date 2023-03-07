@@ -1,0 +1,18 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar {
+  width: 50px;
+  height: 10px;
+  background: #eee;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.progress {
+  background: limegreen;
+  height: 10px;
+}

@@ -1,6 +1,6 @@
 html, body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -9,12 +9,14 @@ html, body {
   height: 100%;
   display: flex;
   flex-direction: column;
+  font-size: 12px;
 }
 
 #root {
-  flex: 1;
+  display: flex;
   flex-direction: column;
   padding: 20px;
   background: #eaeaea;
+  flex: 1;
 }
 

@@ -1,0 +1,39 @@
+.downloads {
+  border-radius: 4px;
+  border: 1px solid #cacaca;
+  overflow: hidden;
+}
+
+.downloads table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.downloads tr {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.downloads th, .downloads td {
+  text-align: left;
+  padding: 1.2rem;
+  min-width: 100px;
+}
+
+.downloads th:first-child, .downloads td:first-child {
+  flex: 1;
+}
+
+.downloads td {
+  background: #fff;
+  padding: 1.2rem;
+}
+
+.downloads tr {
+  border-bottom: 1px solid #cacaca;
+}
+
+.downloads tr:last-child {
+  border: 0;
+}

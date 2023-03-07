@@ -1,4 +1,13 @@
 .search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  font-size: inherit;
+}
+
+.search input {
+  display: block;
   padding: 8px;
   border: 1px solid #cacaca;
   border-radius: 4px;

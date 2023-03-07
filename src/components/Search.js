@@ -1,9 +1,28 @@
+import { useState } from 'react';
+import Button from './Button';
 import styles from './Search.module.css';
 
-export default function Search({ value = '', onChange }) {
-  const handleChange = e => {
-    onChange(e.target.value);
-  }
+export default function Search({ onSubmit }) {
+  const [value, setValue] = useState('');
 
-  return <input className={styles.search} value={value} onChange={handleChange} />
+  const handleSubmit = () => {
+    if (value) {
+      onSubmit(value);
+      setValue('');
+    }
+  };
+
+  const handleKey = e => {
+    if (e.key === 'Enter') {
+      onSubmit(value);
+      setValue('');
+    }
+  };
+
+  return (
+    <div className={styles.search}>
+      <input value={value} onChange={e => setValue(e.target.value)} onKeyDown={handleKey} />
+      <Button onClick={handleSubmit}>Download</Button>
+    </div>
+  );
 }
