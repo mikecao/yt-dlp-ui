@@ -3,8 +3,6 @@ import md5 from 'md5';
 import Search from './components/Search';
 import Downloads from './components/Downloads';
 import styles from './App.module.css';
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/600.css';
 
 function App() {
   const [downloads, setDownloads] = useState([]);

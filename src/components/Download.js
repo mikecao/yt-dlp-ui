@@ -51,7 +51,12 @@ export default function Download({ url }) {
       log(`stderr: ${line}`);
     }
 
-    const command = Command.sidecar('binaries/yt-dlp', [url, '-o', 'd:/temp/%(title)s.%(ext)s']);
+    const command = Command.sidecar('binaries/yt-dlp', [
+      url,
+      '-o',
+      'd:/temp/%(title)s.%(ext)s',
+      '--no-mtime',
+    ]);
 
     command.on('close', data => {
       log({ close: data });
