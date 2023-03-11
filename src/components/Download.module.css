@@ -4,3 +4,19 @@
   text-overflow: ellipsis;
   max-width: 800px;
 }
+
+.status {
+  padding: 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.error {
+  color: #f75c46;
+  background: #ffebe7;
+}
+
+.complete {
+  color: #15a46e;
+  background: #cef8e0;
+}

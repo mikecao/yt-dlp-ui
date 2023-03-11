@@ -1,8 +1,6 @@
 html, body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 100%;
@@ -10,6 +8,7 @@ html, body {
   display: flex;
   flex-direction: column;
   font-size: 12px;
+  box-sizing: border-box;
 }
 
 #root {
@@ -20,3 +19,12 @@ html, body {
   flex: 1;
 }
 
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+input, textarea, button {
+  font-family: 'JetBrains Mono', monospace;
+}

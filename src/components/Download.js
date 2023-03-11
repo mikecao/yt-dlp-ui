@@ -1,5 +1,6 @@
 import { Command } from '@tauri-apps/api/shell';
 import { useEffect, useState } from 'react';
+import classNames from 'classnames';
 import debug from 'debug';
 import ProgressBar from './ProgressBar';
 import styles from './Download.module.css';
@@ -10,8 +11,8 @@ export default function Download({ url }) {
   const [state, setState] = useState({
     name: url,
     status: 'Loading',
-    size: '',
-    speed: '',
+    size: '--',
+    speed: '--',
     progress: 0,
   });
   const { name, status, size, speed, progress } = state;
@@ -74,7 +75,16 @@ export default function Download({ url }) {
       <td>
         <div className={styles.name}>{name}</div>
       </td>
-      <td>{status}</td>
+      <td>
+        <span
+          className={classNames(styles.status, {
+            [styles.error]: status === 'Error',
+            [styles.complete]: status === 'Complete',
+          })}
+        >
+          {status}
+        </span>
+      </td>
       <td>{speed}</td>
       <td>{size}</td>
       <td>

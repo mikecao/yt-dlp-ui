@@ -1,5 +1,6 @@
 .downloads {
   border-radius: 4px;
+  background: #f5f5f5;
   border: 1px solid #cacaca;
   overflow: hidden;
 }
@@ -18,7 +19,7 @@
 .downloads th, .downloads td {
   text-align: left;
   padding: 1.2rem;
-  min-width: 100px;
+  width: 120px;
 }
 
 .downloads th:first-child, .downloads td:first-child {

@@ -29,11 +29,12 @@
     ]
   },
   "dependencies": {
-    "@fontsource/inter": "^4.5.15",
+    "@fontsource/jetbrains-mono": "^4.5.12",
     "@tauri-apps/api": "^1.2.0",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
+    "classnames": "^2.3.2",
     "debug": "^4.3.4",
     "md5": "^2.3.0",
     "react": "^18.2.0",
