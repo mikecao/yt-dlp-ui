@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { appWindow } from '@tauri-apps/api/window';
+import { useEffect, useState } from 'react';
 import md5 from 'md5';
 import produce from 'immer';
 import Search from './components/Search';
@@ -47,8 +48,32 @@ function App() {
     setSavePath(value);
   };
 
+  const handleDrop = e => {
+    console.log({ e });
+  };
+
+  useEffect(() => {
+    let unlisten;
+
+    async function listen() {
+      unlisten = await appWindow.onFileDropEvent(event => {
+        if (event.payload.type === 'drop') {
+          console.log('DROP', event);
+        }
+      });
+    }
+
+    if (!unlisten) {
+      listen();
+    }
+
+    return () => {
+      unlisten?.();
+    };
+  }, []);
+
   return (
-    <div className={styles.app}>
+    <div className={styles.app} onDrop={handleDrop}>
       <div className={styles.header}>
         <Search onSubmit={handleSubmit} />
       </div>
