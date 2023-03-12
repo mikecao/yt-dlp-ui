@@ -21,18 +21,13 @@
           {
             "name": "binaries/yt-dlp",
             "sidecar": true,
-            "args": [
-              {
-                "validator": "\\S+"
-              },
-              "-o",
-              {
-                "validator": "\\S+"
-              },
-              "--no-mtime"
-            ]
+            "args": true
           }
         ]
+      },
+      "dialog": {
+        "all": true,
+        "open": true
       }
     },
     "bundle": {
@@ -83,7 +78,8 @@
         "width": 1024,
         "fileDropEnabled": true,
         "decorations": true,
-        "titleBarStyle": "Overlay"
+        "titleBarStyle": "Overlay",
+        "center": true
       }
     ]
   }

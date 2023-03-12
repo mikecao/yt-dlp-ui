@@ -21,7 +21,12 @@ export default function Search({ onSubmit }) {
 
   return (
     <div className={styles.search}>
-      <input value={value} onChange={e => setValue(e.target.value)} onKeyDown={handleKey} />
+      <input
+        placeholder="Enter URL"
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onKeyDown={handleKey}
+      />
       <Button onClick={handleSubmit}>Download</Button>
     </div>
   );

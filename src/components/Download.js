@@ -3,19 +3,22 @@ import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import debug from 'debug';
 import ProgressBar from './ProgressBar';
+import { DOWNLOADING, LOADING, COMPLETE, ERROR, SAVE_PATH } from '../constants';
 import styles from './Download.module.css';
 
-const log = debug('download');
+const log = debug('ui:download');
+log.log = console.log.bind(console);
 
-export default function Download({ url }) {
+export default function Download({ url, onChange }) {
   const [state, setState] = useState({
     name: url,
-    status: 'Loading',
+    status: LOADING,
     size: '--',
     speed: '--',
     progress: 0,
   });
   const { name, status, size, speed, progress } = state;
+  const path = localStorage.getItem(SAVE_PATH) || '.';
 
   useEffect(() => {
     async function spawn() {
@@ -29,19 +32,19 @@ export default function Download({ url }) {
         setState(state => ({ ...state, name: name[1] }));
       }
 
-      const progress = line.match(/([\d\.]+)% of/);
+      const progress = line.match(/([\d.]+)% of/);
       if (progress) {
         setState(state => ({ ...state, progress: progress[1] }));
       }
 
-      const size = line.match(/([\d\.]+[KMG]iB)/);
+      const size = line.match(/([\d.]+[KMG]iB)/);
       if (size) {
         setState(state => ({ ...state, size: size[1] }));
       }
 
-      const speed = line.match(/at\s+([\d\.]+[\w\/]+)/);
+      const speed = line.match(/at\s+([\d.]+[\w/]+)/);
       if (speed) {
-        setState(state => ({ ...state, speed: speed[1], status: 'Downloading' }));
+        setState(state => ({ ...state, speed: speed[1], status: DOWNLOADING }));
       }
 
       log(`stdout: ${line}`);
@@ -54,17 +57,20 @@ export default function Download({ url }) {
     const command = Command.sidecar('binaries/yt-dlp', [
       url,
       '-o',
-      'd:/temp/%(title)s.%(ext)s',
+      `${path}/%(title)s.%(ext)s`,
       '--no-mtime',
+      '--no-overwrites',
     ]);
 
     command.on('close', data => {
       log({ close: data });
-      setState(state => ({ ...state, status: data.code > 0 ? 'Error' : 'Complete' }));
+      const status = data.code > 0 ? ERROR : COMPLETE;
+      setState(state => ({ ...state, status }));
+      onChange(status);
     });
 
     command.on('error', error => {
-      error({ error });
+      log({ error });
     });
 
     command.stdout.on('data', stdout);
@@ -83,18 +89,18 @@ export default function Download({ url }) {
       <td>
         <span
           className={classNames(styles.status, {
-            [styles.error]: status === 'Error',
-            [styles.complete]: status === 'Complete',
+            [styles.error]: status === ERROR,
+            [styles.complete]: status === COMPLETE,
           })}
         >
           {status}
         </span>
       </td>
-      <td>{speed}</td>
-      <td>{size}</td>
       <td>
         <ProgressBar progress={progress} />
       </td>
+      <td>{speed}</td>
+      <td>{size}</td>
     </tr>
   );
 }
