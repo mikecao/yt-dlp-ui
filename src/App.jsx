@@ -1,5 +1,4 @@
-import { appWindow } from '@tauri-apps/api/window';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import md5 from 'md5';
 import produce from 'immer';
 import Search from './components/Search';
@@ -8,10 +7,12 @@ import Button from './components/Button';
 import { COMPLETE, ERROR, SAVE_PATH } from './constants';
 import styles from './App.module.css';
 import SavePath from './components/SavePath';
+import classNames from 'classnames';
 
 function App() {
   const [downloads, setDownloads] = useState([]);
   const [savePath, setSavePath] = useState(localStorage.getItem(SAVE_PATH) || '');
+  const [showDrop, setShowDrop] = useState(false);
 
   const handleSubmit = value => {
     setDownloads(state =>
@@ -49,31 +50,26 @@ function App() {
   };
 
   const handleDrop = e => {
-    console.log({ e });
+    setShowDrop(false);
+    handleSubmit(e.target.value);
   };
 
-  useEffect(() => {
-    let unlisten;
+  const handleEnter = e => {
+    setShowDrop(true);
+  };
 
-    async function listen() {
-      unlisten = await appWindow.onFileDropEvent(event => {
-        if (event.payload.type === 'drop') {
-          console.log('DROP', event);
-        }
-      });
-    }
-
-    if (!unlisten) {
-      listen();
-    }
-
-    return () => {
-      unlisten?.();
-    };
-  }, []);
+  const handleLeave = e => {
+    setShowDrop(false);
+  };
 
   return (
-    <div className={styles.app} onDrop={handleDrop}>
+    <div className={styles.app} onDragEnter={handleEnter}>
+      <div
+        className={classNames(styles.drop, { [styles.show]: showDrop })}
+        onDragLeave={handleLeave}
+      >
+        <textarea key={showDrop} onChange={handleDrop}></textarea>
+      </div>
       <div className={styles.header}>
         <Search onSubmit={handleSubmit} />
       </div>

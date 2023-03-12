@@ -80,7 +80,7 @@
         "resizable": true,
         "title": "yt-dlp-ui",
         "width": 1024,
-        "fileDropEnabled": true,
+        "fileDropEnabled": false,
         "decorations": true,
         "titleBarStyle": "Overlay",
         "center": true
