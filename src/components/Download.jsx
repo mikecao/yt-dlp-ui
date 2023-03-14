@@ -86,11 +86,11 @@ export default function Download({ url, onChange }) {
   }, [url]);
 
   return (
-    <tr>
-      <td>
+    <div className={styles.row}>
+      <div>
         <div className={styles.name}>{name}</div>
-      </td>
-      <td>
+      </div>
+      <div>
         <span
           className={classNames(styles.status, {
             [styles.error]: status === ERROR,
@@ -99,12 +99,10 @@ export default function Download({ url, onChange }) {
         >
           {status}
         </span>
-      </td>
-      <td>
-        <ProgressBar progress={progress} />
-      </td>
-      <td>{speed}</td>
-      <td>{size}</td>
-    </tr>
+      </div>
+      <div>{progress > 0 ? <ProgressBar progress={progress} /> : '--'}</div>
+      <div>{speed}</div>
+      <div>{size}</div>
+    </div>
   );
 }

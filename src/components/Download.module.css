@@ -1,3 +1,26 @@
+.row {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #cacaca;
+}
+
+.row > div {
+  font-weight: bold;
+  text-align: left;
+  padding: 1.2rem;
+  width: 120px;
+  white-space: nowrap;
+}
+
+.row > div:first-child {
+  flex: 1;
+  min-width: 50px;
+}
+
+.row:last-child {
+  border: 0;
+}
+
 .name {
   overflow: hidden;
   white-space: nowrap;
