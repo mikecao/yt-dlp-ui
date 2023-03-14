@@ -4,10 +4,10 @@ import produce from 'immer';
 import Search from './components/Search';
 import Downloads from './components/Downloads';
 import Button from './components/Button';
+import SavePath from './components/SavePath';
+import DropZone from './components/DropZone';
 import { COMPLETE, ERROR, SAVE_PATH } from './constants';
 import styles from './App.module.css';
-import SavePath from './components/SavePath';
-import classNames from 'classnames';
 
 function App() {
   const [downloads, setDownloads] = useState([]);
@@ -49,9 +49,9 @@ function App() {
     setSavePath(value);
   };
 
-  const handleDrop = e => {
+  const handleDrop = value => {
     setShowDrop(false);
-    handleSubmit(e.target.value);
+    handleSubmit(value);
   };
 
   const handleEnter = e => {
@@ -64,12 +64,7 @@ function App() {
 
   return (
     <div className={styles.app} onDragEnter={handleEnter}>
-      <div
-        className={classNames(styles.drop, { [styles.show]: showDrop })}
-        onDragLeave={handleLeave}
-      >
-        <textarea key={showDrop} onChange={handleDrop}></textarea>
-      </div>
+      <DropZone show={showDrop} onDrop={handleDrop} onLeave={handleLeave} />
       <div className={styles.header}>
         <Search onSubmit={handleSubmit} />
       </div>
