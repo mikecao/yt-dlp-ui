@@ -9,6 +9,7 @@ html, body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #eaeaea;
   width: 100%;
   height: 100%;
   display: flex;
@@ -21,7 +22,6 @@ html, body {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  background: #eaeaea;
   flex: 1;
 }
 
