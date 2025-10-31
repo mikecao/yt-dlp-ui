@@ -1,5 +1,5 @@
 {
-  "name": "yt-dlp-ui",
+  "name": "get-down",
   "version": "0.2.0",
   "private": true,
   "scripts": {
@@ -7,7 +7,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "tauri dev",
-    "bundle": "tauri build"
+    "bundle": "tauri build",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check ."
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^4.5.12",
@@ -29,7 +32,6 @@
     "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react-swc": "^3.0.0",
     "cross-env": "^7.0.3",
-    "prettier": "^2.8.4",
     "vite": "^7.1.12"
   }
 }

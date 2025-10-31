@@ -1,5 +1,5 @@
-import Download from './Download';
-import styles from './Downloads.module.css';
+import Download from "./Download";
+import styles from "./Downloads.module.css";
 
 export default function Downloads({ downloads, onChange }) {
   return (
@@ -13,7 +13,13 @@ export default function Downloads({ downloads, onChange }) {
       </div>
       <div className={styles.body}>
         {downloads.map(({ id, url }) => {
-          return <Download key={id} url={url} onChange={status => onChange(id, status)} />;
+          return (
+            <Download
+              key={id}
+              url={url}
+              onChange={(status) => onChange(id, status)}
+            />
+          );
         })}
       </div>
     </div>

@@ -1,13 +1,13 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
-    "beforeBuildCommand": "yarn build",
-    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
     "devPath": "http://localhost:7000",
     "distDir": "../dist"
   },
   "package": {
-    "productName": "yt-dlp-ui",
+    "productName": "get-down",
     "version": "0.1.0"
   },
   "tauri": {
@@ -45,7 +45,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "yt-dlp-ui",
+      "identifier": "get-down",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -78,7 +78,7 @@
         "fullscreen": false,
         "height": 800,
         "resizable": true,
-        "title": "yt-dlp-ui",
+        "title": "get-down",
         "width": 1024,
         "fileDropEnabled": false,
         "decorations": true,

@@ -1,6 +1,6 @@
-# yt-dlp-ui
+# Get Down
 
-A UI for [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+A simple to use download tool.
 
 ## License
 
