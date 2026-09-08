@@ -1,11 +1,9 @@
-import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { AboutDialog } from '@/components/AboutDialog';
-import { ColorPicker } from '@/components/ColorPicker';
 import DropZone from '@/components/DropZone';
+import { GlobalSettingsDialog } from '@/components/GlobalSettingsDialog';
 import TabBar from '@/components/TabBar';
 import TabPanel from '@/components/TabPanel';
-import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
 import { useTabsStore } from '@/lib/store';
 import { usePrimaryColor } from '@/lib/usePrimaryColor';
@@ -37,15 +35,12 @@ function App() {
     <div className="relative flex min-h-0 flex-1 flex-col" onDragEnter={handleDragEnter}>
       <DropZone show={showDrop} onDrop={handleDrop} onLeave={handleDragLeave} />
       <div className="absolute top-0 right-0 z-20 flex gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-        </Button>
-        <ColorPicker colorName={colorName} onColorChange={setColorName} />
+        <GlobalSettingsDialog
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          colorName={colorName}
+          onColorChange={setColorName}
+        />
         <AboutDialog />
       </div>
       <Tabs value={resolvedActiveTabId} className="flex min-h-0 flex-1 flex-col">

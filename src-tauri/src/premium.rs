@@ -10,10 +10,19 @@ use tokio::{io::AsyncWriteExt, sync::oneshot};
 
 static DOWNLOADS: LazyLock<Mutex<HashMap<String, oneshot::Sender<()>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
+type VerificationReply = (String, oneshot::Sender<String>);
+static VERIFICATIONS: LazyLock<Mutex<HashMap<String, VerificationReply>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum DownloadEvent {
+    #[serde(rename_all = "camelCase")]
+    Verification {
+        download_id: String,
+        verification_id: String,
+        url: String,
+    },
     Log {
         message: String,
     },
@@ -33,6 +42,7 @@ pub enum DownloadEvent {
 
 #[tauri::command]
 pub fn start_premium_download(
+    app: tauri::AppHandle,
     url: String,
     credential_domain: String,
     save_path: String,
@@ -49,7 +59,7 @@ pub fn start_premium_download(
     let task_id = id.clone();
     tauri::async_runtime::spawn(async move {
         let result = tokio::select! {
-            result = download(&task_id, &url, &credential_domain, &save_path, limit, &events) => Some(result),
+            result = download(&app, &task_id, &url, &credential_domain, &save_path, limit, &events) => Some(result),
             _ = cancelled => None,
         };
         if let Some(Err(message)) = result {
@@ -58,8 +68,62 @@ pub fn start_premium_download(
         if let Ok(mut downloads) = DOWNLOADS.lock() {
             downloads.remove(&task_id);
         }
+        if let Ok(mut verifications) = VERIFICATIONS.lock() {
+            verifications.remove(&task_id);
+        }
     });
     Ok(id)
+}
+
+pub async fn request_verification(
+    id: &str,
+    url: String,
+    events: &Channel<DownloadEvent>,
+) -> Result<String, String> {
+    let verification_id = uuid::Uuid::new_v4().to_string();
+    let (send, receive) = oneshot::channel();
+    VERIFICATIONS
+        .lock()
+        .map_err(|_| "Verification is unavailable.")?
+        .insert(id.into(), (verification_id.clone(), send));
+    events
+        .send(DownloadEvent::Verification {
+            download_id: id.into(),
+            verification_id,
+            url,
+        })
+        .map_err(|_| "Could not show the login verification prompt.")?;
+    tokio::time::timeout(Duration::from_secs(600), receive)
+        .await
+        .map_err(|_| "Login verification timed out. Start the download again.")?
+        .map_err(|_| "Login verification was cancelled.".into())
+}
+
+#[tauri::command]
+pub fn submit_login_verification(
+    id: String,
+    verification_id: String,
+    code: String,
+) -> Result<(), String> {
+    let code = code.trim();
+    if code.is_empty() || code.len() > 16384 {
+        return Err("Enter the verification code from the browser page.".into());
+    }
+    let mut pending = VERIFICATIONS
+        .lock()
+        .map_err(|_| "Verification is unavailable.")?;
+    if !pending
+        .get(&id)
+        .is_some_and(|(current, _)| current == &verification_id)
+    {
+        return Err("This verification request has expired. Start the download again.".into());
+    }
+    let (_, reply) = pending
+        .remove(&id)
+        .ok_or("Verification request not found.")?;
+    reply
+        .send(code.to_string())
+        .map_err(|_| "This verification request has expired.".into())
 }
 
 #[tauri::command]
@@ -127,6 +191,7 @@ fn filename(name: &str) -> String {
 }
 
 async fn download(
+    app: &tauri::AppHandle,
     id: &str,
     url: &str,
     credential_domain: &str,
@@ -137,7 +202,7 @@ async fn download(
     let _ = events.send(DownloadEvent::Log {
         message: "Checking premium account and file access…".into(),
     });
-    let file = crate::hosts::resolve(url, credential_domain).await?;
+    let file = crate::hosts::resolve(app, url, credential_domain, id, events).await?;
     let name = filename(&file.name);
     let folder = PathBuf::from(if save_path.is_empty() { "." } else { save_path });
     tokio::fs::create_dir_all(&folder)

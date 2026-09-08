@@ -1,7 +1,3 @@
-import { Palette } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { COLOR_PALETTE, type PrimaryColorName } from '@/lib/usePrimaryColor';
 
 interface ColorPickerProps {
@@ -10,36 +6,31 @@ interface ColorPickerProps {
 }
 
 export function ColorPicker({ colorName, onColorChange }: ColorPickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const selectedColor = COLOR_PALETTE.find(color => color.name === colorName);
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" title="Change primary color">
-          <Palette size={16} />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto p-2">
-        <div className="grid grid-cols-6 gap-1.5">
-          {COLOR_PALETTE.map(color => (
-            <button
-              key={color.name}
-              type="button"
-              onClick={() => {
-                onColorChange(color.name);
-                setIsOpen(false);
-              }}
-              className={`h-6 w-6 rounded-sm border transition-transform hover:scale-110 ${
-                colorName === color.name ? 'ring-2 ring-foreground ring-offset-1' : ''
-              }`}
-              style={{
-                background: color.value ?? 'linear-gradient(135deg, #fff 45%, #000 55%)',
-              }}
-              title={color.label}
-            />
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <fieldset className="flex flex-col gap-3">
+      <legend className="mb-3 text-sm">
+        Accent color <span className="text-muted-foreground">· {selectedColor?.label}</span>
+      </legend>
+      <div className="grid w-fit grid-cols-6 gap-2 sm:grid-cols-9">
+        {COLOR_PALETTE.map(color => (
+          <button
+            key={color.name}
+            type="button"
+            onClick={() => onColorChange(color.name)}
+            className={`h-8 w-8 rounded-sm border transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-4 ${
+              colorName === color.name
+                ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
+                : ''
+            }`}
+            style={{ background: color.value ?? 'linear-gradient(135deg, #fff 45%, #000 55%)' }}
+            title={color.label}
+            aria-label={color.label}
+            aria-pressed={colorName === color.name}
+          />
+        ))}
+      </div>
+    </fieldset>
   );
 }

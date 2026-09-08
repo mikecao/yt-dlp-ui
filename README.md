@@ -27,7 +27,7 @@ where to save it, and monitor the download without working from a terminal.
 - Switch between light and dark themes and choose from 18 accent-color options.
 - Check the installed Get Down and bundled yt-dlp versions from the About dialog.
 - Avoid overwriting existing files by default.
-- Save domain-specific usernames and passwords in the system credential store and
+- Save domain-specific logins with encrypted passwords in the app database and
   automatically reuse them for matching HTTPS downloads across all tabs.
 - Download files from Rapidgator, K2S, and TezFiles with a verified premium account.
 
@@ -75,25 +75,40 @@ an existing file with the same name will not be overwritten.
 
 ### Saved logins
 
-Open **Settings → Saved Logins → Add login**, enter a domain (or paste a website
+Click the gear icon to open **Settings → Saved Logins → Add login**, enter a domain (or paste a website
 URL), username, and password, then click **Save login**. Logins are shared across
 tabs and persist between launches. Use **Edit** to update an account (leave the
 password blank to keep it), or **Remove** to delete it.
 
-For yt-dlp sites, matching is exact by default: `example.com` does not include `www.example.com`.
-Enable **Also use for subdomains** when needed. If more than one login matches,
-the most specific domain wins. Saved credentials are only applied to HTTPS URLs
-and take precedence over username/password options in custom arguments.
+Login matching automatically uses the most specific saved domain. For example,
+`members.example.com` uses its own login when saved, otherwise it falls back to
+`example.com`. Parent-domain logins apply to their subdomains without a separate
+setting. A subdomain login never applies to its parent or siblings. Saved
+credentials for yt-dlp are only applied to HTTPS URLs and take precedence over
+username/password options in custom arguments.
 
-Passwords are stored in Windows Credential Manager, macOS Keychain, or a Linux
-Secret Service keyring. Linux requires a running, unlocked Secret Service such
-as GNOME Keyring or KWallet. SQLite stores only the domain, username, and matching
-preference. For yt-dlp sites, credentials are retrieved when a download starts
-and passed to the yt-dlp process; known credential values are redacted from its
-displayed and saved output. As with other command-line credentials, local process
-inspection may expose them while yt-dlp runs. For the three premium hosts below,
-passwords and session tokens stay in the native application and are sent only to
-the appropriate host's HTTPS API; they are not passed to yt-dlp or included in logs.
+Saved credentials are encrypted with AES-256-GCM in the app's SQLite database.
+Each write uses a fresh random nonce, and encryption binds the credential to its
+domain. The domain and displayed username remain readable metadata. A single random encryption key is stored in Windows Credential Manager,
+macOS Keychain, or the Linux Secret Service keyring. Linux requires a running,
+unlocked Secret Service such as GNOME Keyring or KWallet.
+
+Existing per-site OS-store logins migrate automatically when accessed. The old
+entry is removed only after the encrypted database copy is committed. Interrupted
+cleanup is retried, and inaccessible old credentials remain listed with a warning.
+Saving a login updates its metadata and encrypted credentials in one database
+operation; deleting it removes the database record.
+
+A database backup alone cannot decrypt passwords on another computer: the original
+OS-protected key is also required. If that key disappears while encrypted records
+exist, Get Down reports an error instead of silently creating a replacement.
+
+For yt-dlp sites, credentials are decrypted when a download starts and passed to
+the yt-dlp process; known credential values are redacted from displayed and saved
+output. Local process inspection may expose them while yt-dlp runs. For the three
+premium hosts below, passwords and session tokens stay in the native application
+and are sent only to the appropriate host's HTTPS API; they are not passed to
+yt-dlp or included in logs.
 
 Other saved domains use yt-dlp's username/password authentication and do not create
 a browser session. Site support varies; for sites requiring a browser login, use the
@@ -102,8 +117,8 @@ existing **Cookies from Browser** setting instead. See
 
 ### Premium file hosts
 
-In **Settings → Saved Logins**, use **Add rapidgator.net**, **Add k2s.cc**, or
-**Add tezfiles.com**, then save the account's email and password. Paste a file
+In **Settings → Saved Logins**, click **Add login**, enter `rapidgator.net`,
+`k2s.cc`, or `tezfiles.com`, then save the account's email and password. Paste a file
 link into Downloads as usual. The app checks premium status and remaining
 traffic before requesting a download link. Missing, free, or expired accounts
 cannot start a download, and there is no free-download fallback.
@@ -121,8 +136,10 @@ list. Existing destination files are never overwritten. Failed or cancelled
 transfers keep a uniquely named `.part` file; retrying starts a fresh transfer.
 
 API sessions are reused in memory while the app runs and cleared when logins
-change. Interactive CAPTCHA/2FA prompts and automatic resume are not implemented.
-If a host requires additional verification, the download stops with an error.
+change. K2S and TezFiles login CAPTCHAs can be completed in your browser: open
+the verification page from the download row, then paste its code into Get Down.
+Verification expires after ten minutes. Other login challenges (including 2FA)
+and automatic resume are not implemented.
 Some files may require a particular publisher subscription in addition to a
 premium account. Protocol references:
 [Rapidgator API](https://rapidgator.net/article/api/user) and

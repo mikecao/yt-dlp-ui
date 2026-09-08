@@ -21,6 +21,7 @@ export function premiumHostForUrl(input: string): string | null {
 }
 
 export type PremiumDownloadEvent =
+  | { kind: 'verification'; downloadId: string; verificationId: string; url: string }
   | { kind: 'log'; message: string }
   | { kind: 'progress'; name: string; downloaded: number; total: number | null; speed: number }
   | { kind: 'complete'; name: string }
@@ -46,6 +47,14 @@ export async function startPremiumDownload(
 
 export function cancelPremiumDownload(id: string): Promise<void> {
   return invoke('cancel_premium_download', { id });
+}
+
+export function submitLoginVerification(
+  id: string,
+  verificationId: string,
+  code: string,
+): Promise<void> {
+  return invoke('submit_login_verification', { id, verificationId, code });
 }
 
 export function formatBytes(bytes: number): string {

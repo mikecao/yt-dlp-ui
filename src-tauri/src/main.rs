@@ -16,8 +16,10 @@ fn main() {
             logins::save_login_password,
             logins::get_login_password,
             logins::delete_login_password,
+            logins::list_saved_logins,
             premium::start_premium_download,
             premium::cancel_premium_download,
+            premium::submit_login_verification,
         ])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
@@ -34,6 +36,11 @@ fn main() {
                         version: 2,
                         description: "create saved logins metadata table",
                         sql: "CREATE TABLE IF NOT EXISTS saved_logins (domain TEXT PRIMARY KEY, username TEXT NOT NULL, include_subdomains INTEGER NOT NULL DEFAULT 0)",
+                        kind: tauri_plugin_sql::MigrationKind::Up,
+                    }, tauri_plugin_sql::Migration {
+                        version: 3,
+                        description: "encrypt saved credentials in SQLite",
+                        sql: "ALTER TABLE saved_logins ADD COLUMN credentials BLOB; ALTER TABLE saved_logins ADD COLUMN legacy_cleanup INTEGER NOT NULL DEFAULT 1;",
                         kind: tauri_plugin_sql::MigrationKind::Up,
                     }],
                 )

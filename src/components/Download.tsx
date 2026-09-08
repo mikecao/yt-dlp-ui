@@ -3,6 +3,7 @@ import { Command, open as openShell } from '@tauri-apps/plugin-shell';
 import debug from 'debug';
 import { Terminal, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import LoginVerification from '@/components/LoginVerification';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -11,6 +12,7 @@ import { findLoginForUrl, getLoginForUrl } from '@/lib/logins';
 import {
   cancelPremiumDownload,
   formatBytes,
+  type PremiumDownloadEvent,
   premiumHostForUrl,
   startPremiumDownload,
 } from '@/lib/premium';
@@ -69,6 +71,10 @@ export default function Download({
   const nameRef = useRef(savedName || url);
   const [output, setOutput] = useState(() => toOutputLines(initialOutput));
   const [expanded, setExpanded] = useState(false);
+  const [verification, setVerification] = useState<Extract<
+    PremiumDownloadEvent,
+    { kind: 'verification' }
+  > | null>(null);
   const { name, status, size, speed, progress } = state;
   const path = savePath || '.';
   const pid = useRef(0);
@@ -153,6 +159,8 @@ export default function Download({
             if (cancelledRef.current) return;
             if (event.kind === 'log') {
               appendOutput(event.message);
+            } else if (event.kind === 'verification') {
+              setVerification(event);
             } else if (event.kind === 'progress') {
               nameRef.current = event.name;
               setState(state => ({
@@ -166,6 +174,7 @@ export default function Download({
                 speed: `${formatBytes(event.speed)}/s`,
               }));
             } else if (event.kind === 'complete') {
+              setVerification(null);
               nativeIdRef.current = null;
               nameRef.current = event.name;
               setState(state => ({
@@ -177,6 +186,7 @@ export default function Download({
               }));
               persistStatus(COMPLETE);
             } else {
+              setVerification(null);
               nativeIdRef.current = null;
               stderr(event.message);
               setState(state => ({ ...state, status: ERROR, speed: '--' }));
@@ -295,7 +305,7 @@ export default function Download({
           </button>
         </TableCell>
         <TableCell className="py-2">
-          <span>{status}</span>
+          <span>{verification ? 'Verify login' : status}</span>
         </TableCell>
         <TableCell className="py-2">
           {+progress > 0 ? (
@@ -337,6 +347,21 @@ export default function Download({
           </div>
         </TableCell>
       </TableRow>
+      {verification && (
+        <TableRow>
+          <TableCell colSpan={6} className="py-3">
+            <LoginVerification
+              key={verification.verificationId}
+              challenge={verification}
+              onSubmitted={() =>
+                setVerification(current =>
+                  current?.verificationId === verification.verificationId ? null : current,
+                )
+              }
+            />
+          </TableCell>
+        </TableRow>
+      )}
       {expanded && (
         <TableRow>
           <TableCell colSpan={6} className="p-0">

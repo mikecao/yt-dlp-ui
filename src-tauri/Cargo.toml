@@ -26,6 +26,9 @@ reqwest = { version = "0.13.1", default-features = false, features = ["rustls", 
 tokio = { version = "1", features = ["fs", "io-util", "sync", "time", "macros"] }
 chrono = "0.4"
 uuid = { version = "1", features = ["v4"] }
+aes-gcm = "0.10.3"
+zeroize = "1"
+sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
 
 [features]
 # by default Tauri runs in production mode

@@ -6,7 +6,7 @@ import { premiumHost, premiumHostForUrl } from './premium';
 export interface SavedLogin {
   domain: string;
   username: string;
-  includeSubdomains: boolean;
+  storageWarning?: string | null;
 }
 
 interface Credentials {
@@ -38,15 +38,8 @@ export function normalizeDomain(input: string): string {
 }
 
 export async function listLogins(): Promise<SavedLogin[]> {
-  const db = await getDb();
-  const rows = await db.select<{ domain: string; username: string; include_subdomains: number }[]>(
-    'SELECT domain, username, include_subdomains FROM saved_logins ORDER BY domain',
-  );
-  return rows.map(row => ({
-    domain: row.domain,
-    username: row.username,
-    includeSubdomains: Boolean(row.include_subdomains),
-  }));
+  await getDb();
+  return invoke<SavedLogin[]>('list_saved_logins');
 }
 
 export async function findLoginForUrl(url: string): Promise<SavedLogin | null> {
@@ -61,23 +54,18 @@ export async function findLoginForUrl(url: string): Promise<SavedLogin | null> {
     return null;
   }
   const logins = await listLogins();
-  if (premium) {
-    // Host handlers explicitly recognize www and K2S's keep2share.cc alias.
-    // TezFiles accounts always stay separate from K2S accounts.
-    return (
-      logins.find(login => login.domain === host) ??
-      logins.find(login => login.domain === premium) ??
-      logins.find(login => premiumHost(login.domain) === premium) ??
-      null
-    );
-  }
   const login = logins
-    .filter(
-      login =>
-        host === login.domain || (login.includeSubdomains && host.endsWith(`.${login.domain}`)),
-    )
+    .filter(login => host === login.domain || host.endsWith(`.${login.domain}`))
     .sort((a, b) => b.domain.length - a.domain.length)[0];
-  return login ?? null;
+  if (login) return login;
+
+  // K2S aliases may share a root-domain login. Never borrow a login from a
+  // sibling or child subdomain (e.g. www.example.com for example.com).
+  return premium
+    ? (logins.find(
+        login => !login.domain.startsWith('www.') && premiumHost(login.domain) === premium,
+      ) ?? null)
+    : null;
 }
 
 export async function getLoginForUrl(url: string): Promise<Credentials | null> {
@@ -119,35 +107,16 @@ export const useLoginsStore = create<LoginsState>()((set, get) => ({
       const domain = normalizeDomain(login.domain);
       const username = login.username.trim();
       if (!username) throw new Error('Enter a username.');
-      const existing = (await listLogins()).find(item => item.domain === domain);
-      if (existing && !editing)
-        throw new Error('A login already exists for this domain. Use Edit to update it.');
-      const previous = existing
-        ? await invoke<Credentials>('get_login_password', { domain }).catch(() => null)
-        : null;
-      const nextPassword = password || previous?.password;
-      if (!nextPassword) throw new Error('Enter a password.');
-      await invoke('save_login_password', { domain, username, password: nextPassword });
-      const db = await getDb();
-      try {
-        await db.execute(
-          'INSERT INTO saved_logins (domain, username, include_subdomains) VALUES ($1, $2, $3) ON CONFLICT(domain) DO UPDATE SET username = $2, include_subdomains = $3',
-          [domain, username, login.includeSubdomains ? 1 : 0],
-        );
-      } catch (error) {
-        // Restore the old credential if the metadata write fails.
-        if (previous) {
-          await invoke('save_login_password', { domain, ...previous });
-        } else if (!existing) {
-          await invoke('delete_login_password', { domain });
-        }
-        throw error;
-      }
+      const saved = await invoke<SavedLogin>('save_login_password', {
+        domain,
+        username,
+        password,
+        editing,
+      });
       set({
-        logins: [
-          ...get().logins.filter(item => item.domain !== domain),
-          { ...login, domain, username },
-        ].sort((a, b) => a.domain.localeCompare(b.domain)),
+        logins: [...get().logins.filter(item => item.domain !== domain), saved].sort((a, b) =>
+          a.domain.localeCompare(b.domain),
+        ),
       });
       return true;
     } catch (error) {
@@ -162,8 +131,6 @@ export const useLoginsStore = create<LoginsState>()((set, get) => ({
     set({ busy: true, error: '' });
     try {
       await invoke('delete_login_password', { domain });
-      const db = await getDb();
-      await db.execute('DELETE FROM saved_logins WHERE domain = $1', [domain]);
       set({ logins: get().logins.filter(login => login.domain !== domain) });
       return true;
     } catch (error) {
