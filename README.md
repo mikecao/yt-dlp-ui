@@ -1,8 +1,9 @@
 # Get Down
 
-Get Down is a cross-platform desktop interface for
-[yt-dlp](https://github.com/yt-dlp/yt-dlp). Paste or drop a media URL, choose where
-to save it, and monitor the download without working from a terminal.
+Get Down is a cross-platform desktop downloader using
+[yt-dlp](https://github.com/yt-dlp/yt-dlp) for media sites and native premium
+download handlers for Rapidgator, K2S, and TezFiles. Paste or drop a URL, choose
+where to save it, and monitor the download without working from a terminal.
 
 <img width="1270" height="894" alt="image" src="https://github.com/user-attachments/assets/d296da45-8352-4cd4-9585-388eab1fec5d" />
 
@@ -26,6 +27,9 @@ to save it, and monitor the download without working from a terminal.
 - Switch between light and dark themes and choose from 18 accent-color options.
 - Check the installed Get Down and bundled yt-dlp versions from the About dialog.
 - Avoid overwriting existing files by default.
+- Save domain-specific usernames and passwords in the system credential store and
+  automatically reuse them for matching HTTPS downloads across all tabs.
+- Download files from Rapidgator, K2S, and TezFiles with a verified premium account.
 
 ### Per-tab yt-dlp options
 
@@ -68,6 +72,61 @@ video/audio merging operations still require
 Downloads start immediately and use the settings of their current tab. The default
 output filename is `%(title)s.%(ext)s` (configurable with `-o` in Settings), and
 an existing file with the same name will not be overwritten.
+
+### Saved logins
+
+Open **Settings → Saved Logins → Add login**, enter a domain (or paste a website
+URL), username, and password, then click **Save login**. Logins are shared across
+tabs and persist between launches. Use **Edit** to update an account (leave the
+password blank to keep it), or **Remove** to delete it.
+
+For yt-dlp sites, matching is exact by default: `example.com` does not include `www.example.com`.
+Enable **Also use for subdomains** when needed. If more than one login matches,
+the most specific domain wins. Saved credentials are only applied to HTTPS URLs
+and take precedence over username/password options in custom arguments.
+
+Passwords are stored in Windows Credential Manager, macOS Keychain, or a Linux
+Secret Service keyring. Linux requires a running, unlocked Secret Service such
+as GNOME Keyring or KWallet. SQLite stores only the domain, username, and matching
+preference. For yt-dlp sites, credentials are retrieved when a download starts
+and passed to the yt-dlp process; known credential values are redacted from its
+displayed and saved output. As with other command-line credentials, local process
+inspection may expose them while yt-dlp runs. For the three premium hosts below,
+passwords and session tokens stay in the native application and are sent only to
+the appropriate host's HTTPS API; they are not passed to yt-dlp or included in logs.
+
+Other saved domains use yt-dlp's username/password authentication and do not create
+a browser session. Site support varies; for sites requiring a browser login, use the
+existing **Cookies from Browser** setting instead. See
+[yt-dlp authentication options](https://github.com/yt-dlp/yt-dlp#authentication-options).
+
+### Premium file hosts
+
+In **Settings → Saved Logins**, use **Add rapidgator.net**, **Add k2s.cc**, or
+**Add tezfiles.com**, then save the account's email and password. Paste a file
+link into Downloads as usual. The app checks premium status and remaining
+traffic before requesting a download link. Missing, free, or expired accounts
+cannot start a download, and there is no free-download fallback.
+
+The `www` variants of these domains are recognized automatically; `keep2share.cc`
+is also recognized as K2S. K2S and TezFiles credentials are kept separate.
+HTTP page links are accepted, but all account and file requests use HTTPS.
+Uploadgig is not included in these integrations.
+
+Premium files use the original filename (with unsafe filename characters replaced),
+the tab's save folder, and its rate limit. Other yt-dlp settings, including output
+templates, format conversion, browser cookies, and custom arguments, do not apply.
+Progress, speed, cancellation, and completed/error history use the normal download
+list. Existing destination files are never overwritten. Failed or cancelled
+transfers keep a uniquely named `.part` file; retrying starts a fresh transfer.
+
+API sessions are reused in memory while the app runs and cleared when logins
+change. Interactive CAPTCHA/2FA prompts and automatic resume are not implemented.
+If a host requires additional verification, the download stops with an error.
+Some files may require a particular publisher subscription in addition to a
+premium account. Protocol references:
+[Rapidgator API](https://rapidgator.net/article/api/user) and
+[K2S/TezFiles API](https://keep2share.github.io/api/).
 
 ## Development
 

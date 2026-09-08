@@ -21,6 +21,11 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust", "vendored"] }
+reqwest = { version = "0.13.1", default-features = false, features = ["rustls", "json", "form", "stream"] }
+tokio = { version = "1", features = ["fs", "io-util", "sync", "time", "macros"] }
+chrono = "0.4"
+uuid = { version = "1", features = ["v4"] }
 
 [features]
 # by default Tauri runs in production mode

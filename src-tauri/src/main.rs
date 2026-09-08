@@ -6,8 +6,19 @@
 #[cfg(debug_assertions)]
 use tauri::Manager;
 
+mod hosts;
+mod logins;
+mod premium;
+
 fn main() {
     let builder = tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            logins::save_login_password,
+            logins::get_login_password,
+            logins::delete_login_password,
+            premium::start_premium_download,
+            premium::cancel_premium_download,
+        ])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(
@@ -19,6 +30,11 @@ fn main() {
                         description: "create settings table",
                         sql: "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
                         kind: tauri_plugin_sql::MigrationKind::Up,
+                    }, tauri_plugin_sql::Migration {
+                        version: 2,
+                        description: "create saved logins metadata table",
+                        sql: "CREATE TABLE IF NOT EXISTS saved_logins (domain TEXT PRIMARY KEY, username TEXT NOT NULL, include_subdomains INTEGER NOT NULL DEFAULT 0)",
+                        kind: tauri_plugin_sql::MigrationKind::Up,
                     }],
                 )
                 .build(),
@@ -28,9 +44,10 @@ fn main() {
     // The compiled config still has a default URL, so navigate at runtime.
     #[cfg(debug_assertions)]
     let builder = builder.setup(|app| {
-        if let (Ok(url), Some(window)) =
-            (std::env::var("TAURI_DEV_URL"), app.get_webview_window("main"))
-        {
+        if let (Ok(url), Some(window)) = (
+            std::env::var("TAURI_DEV_URL"),
+            app.get_webview_window("main"),
+        ) {
             let parsed: tauri::Url = url.parse().expect("invalid TAURI_DEV_URL");
             window.navigate(parsed)?;
         }

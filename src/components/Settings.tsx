@@ -1,3 +1,4 @@
+import SavedLogins from '@/components/SavedLogins';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,13 @@ export default function Settings({ tabId }: { tabId: string }) {
       <div className="absolute inset-0 overflow-y-auto py-4">
         <div className="flex w-full max-w-2xl flex-col gap-6">
           <h2 className="font-bold text-lg">yt-dlp Settings</h2>
+
+          <SavedLogins />
+          <p className="text-neutral-500 text-sm">
+            Premium file downloads use the host's original filename, this tab's save folder, and
+            rate limit. Format, output template, browser cookies, and custom yt-dlp arguments below
+            apply only to yt-dlp downloads.
+          </p>
 
           <section className="flex flex-col gap-2">
             <h3 className={sectionHeadingClass}>Format Options</h3>

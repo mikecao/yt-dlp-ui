@@ -98,7 +98,7 @@ function createInitialTabsState() {
   };
 }
 
-const sqliteStorage = createJSONStorage<TabsState>(() => ({
+const sqliteStorage = createJSONStorage<Pick<TabsState, 'tabs' | 'activeTabId'>>(() => ({
   getItem: async (name: string): Promise<string | null> => {
     return getSetting(name);
   },

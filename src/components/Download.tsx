@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { CANCELLED, COMPLETE, DOWNLOADING, ERROR, LOADING } from '@/lib/constants';
+import { findLoginForUrl, getLoginForUrl } from '@/lib/logins';
+import {
+  cancelPremiumDownload,
+  formatBytes,
+  premiumHostForUrl,
+  startPremiumDownload,
+} from '@/lib/premium';
 import { buildYtDlpArgs } from '@/lib/settingsStore';
 import type { Settings } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -66,9 +73,16 @@ export default function Download({
   const path = savePath || '.';
   const pid = useRef(0);
   const childRef = useRef<Child | null>(null);
+  const nativeIdRef = useRef<string | null>(null);
   const outputId = useRef(initialOutput?.length ?? 0);
   const outputLinesRef = useRef<string[]>(initialOutput ? [...initialOutput] : []);
   const outputRef = useRef<HTMLDivElement | null>(null);
+  const cancelledRef = useRef(false);
+  const secretsRef = useRef<string[]>([]);
+
+  function redact(text: string) {
+    return secretsRef.current.reduce((line, secret) => line.split(secret).join('[redacted]'), text);
+  }
 
   function appendOutput(text: string) {
     outputLinesRef.current.push(text);
@@ -80,6 +94,7 @@ export default function Download({
   }
 
   function stdout(line: string) {
+    line = redact(line);
     const name = line.match(/Destination:\s+(.*)/);
     if (name) {
       nameRef.current = name[1];
@@ -114,16 +129,88 @@ export default function Download({
   }
 
   function stderr(line: string) {
+    line = redact(line);
     log(`stderr: ${line}`);
     appendOutput(line);
   }
 
   useEffect(() => {
     async function spawn() {
+      const premium = premiumHostForUrl(url);
+      if (premium) {
+        const login = await findLoginForUrl(url);
+        if (cancelledRef.current) return;
+        if (!login)
+          throw new Error(
+            `Save a premium login for ${premium} in Settings → Saved Logins. Free downloads are not supported.`,
+          );
+        const id = await startPremiumDownload(
+          url,
+          login.domain,
+          path,
+          settings.rateLimit,
+          event => {
+            if (cancelledRef.current) return;
+            if (event.kind === 'log') {
+              appendOutput(event.message);
+            } else if (event.kind === 'progress') {
+              nameRef.current = event.name;
+              setState(state => ({
+                ...state,
+                name: event.name,
+                status: DOWNLOADING,
+                progress: event.total
+                  ? Math.min(100, (event.downloaded / event.total) * 100).toFixed(1)
+                  : '0',
+                size: formatBytes(event.total ?? event.downloaded),
+                speed: `${formatBytes(event.speed)}/s`,
+              }));
+            } else if (event.kind === 'complete') {
+              nativeIdRef.current = null;
+              nameRef.current = event.name;
+              setState(state => ({
+                ...state,
+                name: event.name,
+                status: COMPLETE,
+                progress: '100',
+                speed: '--',
+              }));
+              persistStatus(COMPLETE);
+            } else {
+              nativeIdRef.current = null;
+              stderr(event.message);
+              setState(state => ({ ...state, status: ERROR, speed: '--' }));
+              persistStatus(ERROR);
+            }
+          },
+        );
+        nativeIdRef.current = id;
+        if (cancelledRef.current) await cancelPremiumDownload(id);
+        return;
+      }
       const args = buildYtDlpArgs(settings, url, path);
+      const login = await getLoginForUrl(url);
+      if (cancelledRef.current) return;
+      if (login) {
+        secretsRef.current = [
+          login.password,
+          login.username,
+          JSON.stringify(login.password).slice(1, -1),
+          encodeURIComponent(login.password),
+        ]
+          .filter(Boolean)
+          .sort((a, b) => b.length - a.length);
+        // Place credentials last so tab custom arguments cannot replace them.
+        // A custom '--' separator would turn these into URLs instead of options.
+        if (args.includes('--')) {
+          throw new Error('Remove the -- separator from Custom Arguments to use a saved login.');
+        }
+        args.push('--username', login.username, '--password', login.password);
+      }
       const command = Command.sidecar('binaries/yt-dlp', args);
 
       command.on('close', data => {
+        if (cancelledRef.current) return;
         log({ close: data });
         const status = data?.code ? ERROR : COMPLETE;
         setState(state => ({ ...state, status }));
@@ -131,13 +218,20 @@ export default function Download({
       });
 
       command.on('error', error => {
-        log({ error });
+        if (cancelledRef.current) return;
+        stderr(String(error));
+        setState(state => ({ ...state, status: ERROR }));
+        persistStatus(ERROR);
       });
 
       command.stdout.on('data', stdout);
       command.stderr.on('data', stderr);
 
       const child = await command.spawn();
+      if (cancelledRef.current) {
+        await child.kill();
+        return;
+      }
       log(`pid: ${child.pid}`);
 
       pid.current = child.pid;
@@ -146,7 +240,12 @@ export default function Download({
 
     if (url && !pid.current && initialStatus !== COMPLETE && initialStatus !== ERROR) {
       pid.current = 1;
-      spawn();
+      void spawn().catch(error => {
+        if (cancelledRef.current) return;
+        stderr(error instanceof Error ? error.message : String(error));
+        setState(state => ({ ...state, status: ERROR }));
+        persistStatus(ERROR);
+      });
     }
   }, [url, initialStatus]);
 
@@ -160,6 +259,11 @@ export default function Download({
 
   const handleRemove = async () => {
     const isInProgress = status === LOADING || status === DOWNLOADING;
+    cancelledRef.current = true;
+    if (isInProgress && nativeIdRef.current) {
+      await cancelPremiumDownload(nativeIdRef.current);
+      nativeIdRef.current = null;
+    }
     if (isInProgress && childRef.current) {
       log('Cancelled manually');
       await childRef.current.kill();
