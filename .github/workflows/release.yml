@@ -98,7 +98,7 @@ jobs:
 
       # 9. Build frontend
       - name: Build frontend
-        run: pnpm build
+        run: pnpm vite-build
 
       # 10. Build Tauri app and create release
       - name: Build Tauri app
